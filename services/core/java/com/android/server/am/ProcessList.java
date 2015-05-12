@@ -120,6 +120,13 @@ final class ProcessList {
     // without empty apps being able to push them out of memory.
     static final int MIN_CACHED_APPS = 2;
 
+    // Min aging threshold in milliseconds to consider a B services for propagation to higher adj
+    static final int MIN_BSERVICE_AGING_TIME = SystemProperties.getInt("ro.sys.fw.bservice_age",5000);
+    // Threshold for B Services when in memory pressure
+    static final int BSERVICE_APP_THRESHOLD = SystemProperties.getInt("ro.sys.fw.bservice_limit",5);
+    // Enable B service aging propagation on memory pressure.
+    static final boolean ENABLE_B_SERVICE_PROPAGATION = SystemProperties.getBoolean("ro.sys.fw.bservice_enable",false);
+
     // The maximum number of cached processes we will keep around before killing them.
     // NOTE: this constant is *only* a control to not let us go too crazy with
     // keeping around processes on devices with large amounts of RAM.  For devices that
@@ -192,6 +199,17 @@ final class ProcessList {
             FOREGROUND_APP_ADJ, VISIBLE_APP_ADJ, PERCEPTIBLE_APP_ADJ,
             BACKUP_APP_ADJ, CACHED_APP_MIN_ADJ, CACHED_APP_MAX_ADJ
     };
+
+    // These are the low-end OOM level limits for 32bit
+    private final int[] mOomMinFreeLow32Bit = new int[] {
+            8192, 12288, 16384,
+            24576, 28672, 32768
+    };
+    // These are the high-end OOM level limits for 32bit
+    private final int[] mOomMinFreeHigh32Bit = new int[] {
+            61440, 76800, 92160,
+            107520, 137660, 174948
+    };
     // These are the low-end OOM level limits.  This is appropriate for an
     // HVGA or smaller phone with less than 512MB.  Values are in KB.
     private final int[] mOomMinFreeLow = new int[] {
@@ -206,6 +224,11 @@ final class ProcessList {
     };
     // The actual OOM killer memory levels we are using.
     private final int[] mOomMinFree = new int[mOomAdj.length];
+    // Optimal OOM killer memory levels for Low-Tier devices.
+    private final int[] mOomMinFreeLowRam = new int[] {
+            12288, 20478, 32766,
+            40962, 49152, 57342
+    };
 
     private final long mTotalMemMb;
 
@@ -261,16 +284,38 @@ final class ProcessList {
         }
 
         final boolean is64bit = Build.SUPPORTED_64_BIT_ABIS.length > 0;
+        if (is64bit) {
+            // Increase the high min-free levels for cached processes for 64-bit
+            mOomMinFreeHigh[4] = 225000;
+            mOomMinFreeHigh[5] = 325000;
+        }
 
         for (int i=0; i<mOomAdj.length; i++) {
-            int low = mOomMinFreeLow[i];
-            int high = mOomMinFreeHigh[i];
+            int low = 0;
+            int high = 0;
+
             if (is64bit) {
-                // Increase the high min-free levels for cached processes for 64-bit
-                if (i == 4) high = (high*3)/2;
-                else if (i == 5) high = (high*7)/4;
+                // On 64 bit devices, we consume more baseline RAM, because 64 bit is cool!
+                // To avoid being all pagey and stuff, scale up the memory levels to
+                // give us some breathing room.
+                Slog.i("XXXXXX", "choosing minFree values for 64 Bit");
+                low = mOomMinFreeLow[i];
+                high = mOomMinFreeHigh[i];
+
+                mOomMinFree[i] = (int)(low + ((high-low)*scale));
+                // More scaling up not required yet
+                // mOomMinFree[i] = (3*mOomMinFree[i])/2;
+
+            } else if (ActivityManager.isLowRamDeviceStatic()) {
+                // Overwrite calculated LMK parameters with the low-tier tested/validated values
+                Slog.i("XXXXXX", "choosing minFree values for lowram");
+                mOomMinFree[i] = mOomMinFreeLowRam[i];
+            } else {
+                Slog.i("XXXXXX", "choosing minFree values for 32 Bit");
+                low = mOomMinFreeLow32Bit[i];
+                high = mOomMinFreeHigh32Bit[i];
+                mOomMinFree[i] = (int)(low + ((high-low)*scale));
             }
-            mOomMinFree[i] = (int)(low + ((high-low)*scale));
         }
 
         if (minfree_abs >= 0) {
