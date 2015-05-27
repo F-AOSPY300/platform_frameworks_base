@@ -424,6 +424,7 @@
   <java-symbol type="dimen" name="notification_badge_size" />
   <java-symbol type="dimen" name="immersive_mode_cling_width" />
   <java-symbol type="dimen" name="circular_display_mask_offset" />
+  <java-symbol type="dimen" name="accessibility_magnification_indicator_width" />
 
   <java-symbol type="string" name="add_account_button_label" />
   <java-symbol type="string" name="addToDictionary" />
@@ -1611,6 +1612,7 @@
   <java-symbol type="bool" name="config_useAttentionLight" />
   <java-symbol type="bool" name="config_animateScreenLights" />
   <java-symbol type="bool" name="config_automatic_brightness_available" />
+  <java-symbol type="bool" name="config_autoBrightnessResetAmbientLuxAfterWarmUp" />
   <java-symbol type="bool" name="config_dozeAfterScreenOff" />
   <java-symbol type="bool" name="config_enableActivityRecognitionHardwareOverlay" />
   <java-symbol type="bool" name="config_enableFusedLocationOverlay" />
@@ -1665,6 +1667,9 @@
   <java-symbol type="id" name="replace_message" />
   <java-symbol type="fraction" name="config_dimBehindFadeDuration" />
   <java-symbol type="fraction" name="config_screenAutoBrightnessDozeScaleFactor" />
+  <java-symbol type="integer" name="config_autoBrightnessBrighteningLightDebounce"/>
+  <java-symbol type="integer" name="config_autoBrightnessDarkeningLightDebounce"/>
+  <java-symbol type="integer" name="config_autoBrightnessLightSensorRate"/>
   <java-symbol type="integer" name="config_carDockKeepsScreenOn" />
   <java-symbol type="integer" name="config_criticalBatteryWarningLevel" />
   <java-symbol type="integer" name="config_datause_notification_type" />
