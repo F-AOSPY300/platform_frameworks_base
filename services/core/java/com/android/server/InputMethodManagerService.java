@@ -122,6 +122,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -3408,7 +3409,7 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             try {
                 fos = subtypesFile.startWrite();
                 final XmlSerializer out = new FastXmlSerializer();
-                out.setOutput(fos, "utf-8");
+                out.setOutput(fos, StandardCharsets.UTF_8.name());
                 out.startDocument(null, true);
                 out.setFeature("http://xmlpull.org/v1/doc/features.html#indent-output", true);
                 out.startTag(null, NODE_SUBTYPES);
@@ -3454,7 +3455,7 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
             try {
                 fis = subtypesFile.openRead();
                 final XmlPullParser parser = Xml.newPullParser();
-                parser.setInput(fis, null);
+                parser.setInput(fis, StandardCharsets.UTF_8.name());
                 int type = parser.getEventType();
                 // Skip parsing until START_TAG
                 while ((type = parser.next()) != XmlPullParser.START_TAG
